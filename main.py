@@ -15,7 +15,7 @@ ZERO_ID = ''
 SLEEP_TIME = int(global_config.get("config", "SLEEP_TIME")) * 60
 try_num = int(global_config.get("config", "TRY_NUM"))
 # 通知微信方糖服务号
-WX_API_HOST = 'https://sctapi.ftqq.com/'+FANG_TANG_TOKEN+'.send?title={0}&desp={1}'
+WX_API_HOST = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'
 
 # 第一种日志方式
 # LOG_FORMAT = '[%(levelname)s] %(asctime)s - %(message)s'
@@ -38,8 +38,8 @@ date_fmt = "%Y-%m-%d %H:%M:%S"
 f_name = time.strftime("_%Y%m%d.log", time.localtime())
 level = logging.INFO
 # 创建TimedRotatingFileHandler对象,每天生成一个文件
-log_file_handler = logging.handlers.TimedRotatingFileHandler(filename='log/dns.log', when="midnight", interval=1,
-                                                             backupCount=3)
+log_file_handler = logging.handlers.TimedRotatingFileHandler(filename='log/dns.log', when="midnight", interval=1
+                                                             , backupCount=3, encoding='utf-8')
 log_file_handler.suffix = f_name
 # 设置日志打印格式
 log_file_handler.setLevel(level)
@@ -204,4 +204,3 @@ if __name__ == '__main__':
         logging.info('加载区域id失败')
         sys.exit(0)
     loopMonitor()
-
