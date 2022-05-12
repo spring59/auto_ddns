@@ -9,7 +9,9 @@ Server酱：
 https://sct.ftqq.com/
 # 运行脚本
 cd auto_ddns
+
 pip3 install -r requirements.txt
+
 方法一：脚本后加& 加了&以后可以使脚本在后台运行，这样的话你就可以继续工作了。但是有一个问题就是你关闭终端连接后，脚本会停止运行
 
 python3  main.py >/dev/null 2>&1 &
