@@ -8,6 +8,8 @@ Server酱：
 微信通知服务
 https://sct.ftqq.com/
 # 运行脚本
+git clone git@github.com:spring59/auto_ddns.git
+
 cd auto_ddns
 
 pip3 install -r requirements.txt
