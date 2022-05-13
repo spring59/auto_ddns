@@ -6,14 +6,15 @@ import logging, logging.handlers
 import time
 import requests
 import re
+import argparse
 from config import global_config
 
-TOKEN_CLOUD = global_config.get("config", "CLOUD_FLARE_TOKEN")
-DNS_ADDRESS = global_config.get("config", "DNS_ADDRESS")
-FANG_TANG_TOKEN = global_config.get("config", "FANG_TANG_TOKEN")
+TOKEN_CLOUD = global_config.get("config", "cloud_flare_token")
+DNS_ADDRESS = global_config.get("config", "dns_address")
+FANG_TANG_TOKEN = global_config.get("config", "fang_tang_token")
 ZERO_ID = ''
-SLEEP_TIME = int(global_config.get("config", "SLEEP_TIME")) * 60
-try_num = int(global_config.get("config", "TRY_NUM"))
+SLEEP_TIME = int(global_config.get("config", "sleep_time")) * 60
+try_num = int(global_config.get("config", "try_num"))
 # 通知微信方糖服务号
 WX_API_HOST = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'
 
@@ -37,11 +38,9 @@ LOG_FORMAT = "[%(levelname)s]%(asctime)s - %(message)s"
 date_fmt = "%Y-%m-%d %H:%M:%S"
 f_name = time.strftime("_%Y%m%d.log", time.localtime())
 level = logging.INFO
-# 创建TimedRotatingFileHandler对象,每天生成一个文件
 log_file_handler = logging.handlers.TimedRotatingFileHandler(filename='log/dns.log', when="midnight", interval=1
                                                              , backupCount=3, encoding='utf-8')
 log_file_handler.suffix = f_name
-# 设置日志打印格式
 log_file_handler.setLevel(level)
 formatter = logging.Formatter(LOG_FORMAT, datefmt=date_fmt)
 log_file_handler.setFormatter(formatter)
@@ -50,6 +49,9 @@ logging.getLogger('').addHandler(log_file_handler)
 
 
 def wx_ft_notice(currentIp, updateRes, hostName):
+    if FANG_TANG_TOKEN is None or FANG_TANG_TOKEN == '':
+        logging.info('未配置server酱token')
+        return
     title = '主人IPv4变了:%s,hk1更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
     desp = hostName;
     url = WX_API_HOST.format(title, desp)
@@ -74,12 +76,13 @@ def get_record_id(dns_name, zone_id, token):
         for domain in domains:
             if dns_name == domain['name']:
                 return domain['id'], domain['name'], domain['content']
-    except:
-        logging.info("请求服务商url失败")
+    except Exception as e:
+        logging.info("请求服务商url失败" + e)
     return None
 
 
-def get_cloudflare_zero_id():
+def parse_cloudflare_zero_id():
+    global ZERO_ID
     try:
         host_url = ''
         if DNS_ADDRESS.count('.') == 2:
@@ -96,7 +99,10 @@ def get_cloudflare_zero_id():
         if json.loads(resp.text)['success']:
             domains = json.loads(resp.text)['result'][0]
             if domains is not None:
-                return domains['id']
+                ZERO_ID = domains['id']
+                return ZERO_ID
+        else:
+            return None
     except Exception as e:
         logging.info("获取区域id失败" + e)
     return None
@@ -195,10 +201,38 @@ def loopMonitor():
         time.sleep(SLEEP_TIME)
 
 
-ZERO_ID = get_cloudflare_zero_id()
+# 初始化执行脚本传入的参数
+def init_params():
+    global TOKEN_CLOUD
+    global DNS_ADDRESS
+    global FANG_TANG_TOKEN
+    global SLEEP_TIME
+    parser = argparse.ArgumentParser(description='manual to this script')
+    parser.add_argument('--token', type=str, default=None)
+    parser.add_argument('--host', type=str, default=None)
+    parser.add_argument('--j', type=str, default=None)
+    parser.add_argument('--sleep', type=str, default=None)
+    args = parser.parse_args()
+    if args.token != '' and args.host != '':
+        logging.info("初始化参数成功")
+        TOKEN_CLOUD = args.token
+        DNS_ADDRESS = args.host
+        global_config.set('config', 'cloud_flare_token', TOKEN_CLOUD)
+        global_config.set('config', 'dns_address', DNS_ADDRESS)
+        if args.j != '':
+            FANG_TANG_TOKEN = args.j
+            global_config.set('config', 'fang_tang_token', FANG_TANG_TOKEN)
+        if args.sleep is not None and args.sleep != '':
+            SLEEP_TIME = int(args.sleep) * 60
+            global_config.set('config', 'sleep_time', args.sleep)
+        global_config.writer_all()
+
+
 # 开始程序
 if __name__ == '__main__':
-    if ZERO_ID is not '':
+    init_params()
+    parse_cloudflare_zero_id()
+    if len(ZERO_ID) != 0:
         logging.info('加载区域id成功')
     else:
         logging.info('加载区域id失败')
