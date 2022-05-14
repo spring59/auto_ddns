@@ -111,8 +111,8 @@ def update_cloudflare_dns_record(dns_name, zone_id, token, dns_id, ip, proxied=F
             })
         if not json.loads(resp.text)['success']:
             return False
-    except:
-        logging.info("请求服务商更新url失败")
+    except Exception as e:
+        logging.info("请求服务商更新url失败 %s" % e)
         return False
     return True
 
