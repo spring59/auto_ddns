@@ -47,7 +47,7 @@ linux/amd64:
 
 通过传参的方式启动 无需修改config.ini
 
-docker run -d --name auto_ddns  --restart=always -e token="*****" -e  host="*****" -e j="*****" -e sleep="10" auto_ddns 
+docker run -d --name auto_ddns  --restart=always -e token="*****" -e  host="*****" -e j="*****" -e sleep="10" spring59/auto_ddns:{tag}
 
 # 二.
 git clone git@github.com:spring59/auto_ddns.git
