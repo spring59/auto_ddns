@@ -218,14 +218,14 @@ def init_params():
             SLEEP_TIME = int(args.sleep) * 60
             global_config.set('config', 'sleep_time', args.sleep)
         global_config.writer_all()
-        logging.info("init params success")
+        logging.info("初始化参数成功")
     else:
         TOKEN_CLOUD = global_config.get("config", "cloud_flare_token")
         DNS_ADDRESS = global_config.get("config", "dns_address")
         FANG_TANG_TOKEN = global_config.get("config", "fang_tang_token")
         SLEEP_TIME = int(global_config.get("config", "sleep_time")) * 60
         try_num = int(global_config.get("config", "try_num"))
-        logging.info("load params success")
+        logging.info("加载参数成功")
 
 
 if __name__ == '__main__':

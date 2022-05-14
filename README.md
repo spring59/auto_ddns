@@ -39,11 +39,11 @@ nohup python3  main.py >/dev/null 2>&1 &
 
 linux/arm:
 
- docker pull spring59/auto_ddns:2.0
+ docker pull spring59/auto_ddns:1.0
 
 linux/amd64:
 
- docker pull spring59/auto_ddns:1.0
+ docker pull spring59/auto_ddns:latest
 
 通过传参的方式启动 无需修改config.ini
 
