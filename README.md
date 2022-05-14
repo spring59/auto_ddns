@@ -60,10 +60,10 @@ docker run -d --name auto_ddns  --restart=always  {repo_name}/auto_ddns
 
 
 # 参数说明：
-token: cloudflare的token
+token: cloudflare的token,必传
 
-host: 一级或者二级 web url
+host: 一级或者二级 web url,公网要绑定的网址,必传
 
-j: server酱token,没有则不通知微信
+j: server酱token,没有则不通知微信,非必传
 
-sleep: 每次检测时间间隔（单位/分钟）
+sleep: 每次检测时间间隔,非必传（单位/分钟）
