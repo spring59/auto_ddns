@@ -34,7 +34,7 @@ logging.getLogger('').addHandler(log_file_handler)
 
 
 def wx_ft_notice(currentIp, updateRes, hostName):
-    if is_not_empty(FANG_TANG_TOKEN):
+    if not is_not_empty(FANG_TANG_TOKEN):
         logging.info('未配置server酱token')
         return
     title = '主人IPv4变了:%s,更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
