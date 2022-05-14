@@ -11,10 +11,9 @@ from config import global_config
 TOKEN_CLOUD = ''
 DNS_ADDRESS = ''
 FANG_TANG_TOKEN = ''
-ZERO_ID = ''
+ZONE_ID = ''
 SLEEP_TIME = 10
 try_num = 10
-# 通知微信方糖服务号
 WX_API_HOST = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'
 if os.path.exists('log'):
     pass
@@ -22,9 +21,9 @@ else:
     os.mkdir('log')
 LOG_FORMAT = "[%(levelname)s]%(asctime)s - %(message)s"
 date_fmt = "%Y-%m-%d %H:%M:%S"
-f_name = time.strftime("_%Y%m%d.log", time.localtime())
+f_name = time.strftime("%Y%m%d.log", time.localtime())
 level = logging.INFO
-log_file_handler = logging.handlers.TimedRotatingFileHandler(filename='log/dns.log', when="midnight", interval=1
+log_file_handler = logging.handlers.TimedRotatingFileHandler(filename='log/dns.log', when="D", interval=1
                                                              , backupCount=3, encoding='utf-8')
 log_file_handler.suffix = f_name
 log_file_handler.setLevel(level)
@@ -35,17 +34,17 @@ logging.getLogger('').addHandler(log_file_handler)
 
 
 def wx_ft_notice(currentIp, updateRes, hostName):
-    if FANG_TANG_TOKEN is None or FANG_TANG_TOKEN == '':
+    if is_not_empty(FANG_TANG_TOKEN):
         logging.info('未配置server酱token')
         return
-    title = '主人IPv4变了:%s,hk1更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
+    title = '主人IPv4变了:%s,更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
     description = hostName
     url = WX_API_HOST.format(title, description)
     response = requests.get(url)
     if response.status_code != 200:
-        logging.info("wx 推送失败")
+        logging.info("push wx message fail")
     else:
-        logging.info('wx 推送成功')
+        logging.info('push wx message success')
 
 
 def get_record_id(dns_name, zone_id, token):
@@ -63,12 +62,12 @@ def get_record_id(dns_name, zone_id, token):
             if dns_name == domain['name']:
                 return domain['id'], domain['name'], domain['content']
     except Exception as e:
-        logging.info("请求服务商url失败" + e)
+        logging.info("get history record fail: %s" % e)
     return None
 
 
-def parse_cloudflare_zero_id():
-    global ZERO_ID
+def parse_cloudflare_zone_id():
+    global ZONE_ID
     try:
         host_url = ''
         if DNS_ADDRESS.count('.') == 2:
@@ -85,12 +84,12 @@ def parse_cloudflare_zero_id():
         if json.loads(resp.text)['success']:
             domains = json.loads(resp.text)['result'][0]
             if domains is not None:
-                ZERO_ID = domains['id']
-                return ZERO_ID
+                ZONE_ID = domains['id']
+                return ZONE_ID
         else:
             return None
     except Exception as e:
-        logging.info("获取区域id失败 %s" % e)
+        logging.info("get zone id fail: %s" % e)
     return None
 
 
@@ -112,7 +111,7 @@ def update_cloudflare_dns_record(dns_name, zone_id, token, dns_id, ip, proxied=F
         if not json.loads(resp.text)['success']:
             return False
     except Exception as e:
-        logging.info("请求服务商更新url失败 %s" % e)
+        logging.info("update cloudflare dns record fail: %s" % e)
         return False
     return True
 
@@ -121,40 +120,40 @@ reg = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|
 
 
 def get_current_ip():
-    # first get current public internet ip
+    # first request
     try:
         resp = requests.get("https://ip.3322.net")
         if resp.status_code == 200:
             return resp.text.replace('\n', '')
     except Exception as e:
-        logging.info("3322获取当前公网失败！%s" % e)
-    # second get current public internet ip
+        logging.info("3322 get public ip fail: %s" % e)
+    # second request
     try:
         resp = requests.get("https://ddns.oray.com/checkip")
         if resp.status_code == 200:
             return re.findall(reg, resp.text)[0]
     except Exception as e:
-        logging.info("ora_y获取当前公网失败！%s" % e)
+        logging.info("ora_y get public ip fail: %s" % e)
+    # three request
     try:
         resp = requests.get("https://myip.ipip.net/")
         if resp.status_code == 200:
             result = re.findall(reg, resp.text)
             return result[0]
     except Exception as e:
-        logging.info("myip获取当前公网失败！%s" % e)
+        logging.info("myip get public ip fail: %s" % e)
     time.sleep(SLEEP_TIME)
     return get_current_ip()
 
 
 def compare_with_dns_server(concurrent_ip):
-    obj = get_record_id(DNS_ADDRESS, ZERO_ID, TOKEN_CLOUD)
+    obj = get_record_id(DNS_ADDRESS, ZONE_ID, TOKEN_CLOUD)
     if obj is None:
         return
-    # print(strObj[0], strObj[1], strObj[2])
     if obj[2] == concurrent_ip:
         logging.info("你的IP:%s 没有变化, 域名:%s" % (concurrent_ip, DNS_ADDRESS))
     elif obj[2] != concurrent_ip:
-        res = update_cloudflare_dns_record(DNS_ADDRESS, ZERO_ID, TOKEN_CLOUD, obj[0], concurrent_ip, False)
+        res = update_cloudflare_dns_record(DNS_ADDRESS, ZONE_ID, TOKEN_CLOUD, obj[0], concurrent_ip, False)
         if res:
             logging.info("您的域名发生了改变：当前域名：%s" % concurrent_ip)
             wx_ft_notice(concurrent_ip, res, obj[1])
@@ -193,7 +192,6 @@ def is_not_empty(obj):
     return False
 
 
-# 初始化的参数
 def init_params():
     global TOKEN_CLOUD
     global DNS_ADDRESS
@@ -220,23 +218,22 @@ def init_params():
             SLEEP_TIME = int(args.sleep) * 60
             global_config.set('config', 'sleep_time', args.sleep)
         global_config.writer_all()
-        logging.info("初始化参数成功")
+        logging.info("init params success")
     else:
         TOKEN_CLOUD = global_config.get("config", "cloud_flare_token")
         DNS_ADDRESS = global_config.get("config", "dns_address")
         FANG_TANG_TOKEN = global_config.get("config", "fang_tang_token")
         SLEEP_TIME = int(global_config.get("config", "sleep_time")) * 60
         try_num = int(global_config.get("config", "try_num"))
-        logging.info("加载参数成功")
+        logging.info("load params success")
 
 
-# 开始程序
 if __name__ == '__main__':
     init_params()
-    parse_cloudflare_zero_id()
-    if len(ZERO_ID) != 0:
+    parse_cloudflare_zone_id()
+    if len(ZONE_ID) != 0:
         logging.info('加载区域id成功')
     else:
-        logging.info('加载区域id失败')
+        logging.info('加载区域id失败，停止脚本')
         sys.exit(0)
     loopMonitor()
