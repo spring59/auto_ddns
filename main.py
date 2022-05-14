@@ -14,7 +14,7 @@ FANG_TANG_TOKEN = ''
 ZONE_ID = ''
 SLEEP_TIME = 10
 try_num = 10
-WX_API_HOST = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'
+
 if os.path.exists('log'):
     pass
 else:
@@ -39,12 +39,15 @@ def wx_ft_notice(currentIp, updateRes, hostName):
         return
     title = '主人IPv4变了:%s,更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
     description = hostName
-    url = WX_API_HOST.format(title, description)
-    response = requests.get(url)
-    if response.status_code != 200:
-        logging.info("push wx message fail")
-    else:
-        logging.info('push wx message success')
+    url = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'.format(title, description)
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            logging.info("推送微信消息成功")
+        else:
+            logging.info('推送微信消息失败')
+    except Exception as e:
+        logging.info("推送微信失败: %s" % e)
 
 
 def get_record_id(dns_name, zone_id, token):
