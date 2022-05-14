@@ -36,20 +36,20 @@ nohup python3  main.py >/dev/null 2>&1 &
 # 一.
 
  docker search spring59/auto_ddns
+
 linux/arm:
+
  docker pull spring59/auto_ddns:2.0
+
 linux/amd64:
+
  docker pull spring59/auto_ddns:1.0
 
 通过传参的方式启动 无需修改config.ini
-docker run -d --name auto_ddns  --restart=always 
--e token="*****" 
--e  host="*****" 
--e j="*****"  
--e sleep="10" 
-auto_ddns 
 
-# 二
+docker run -d --name auto_ddns  --restart=always -e token="*****" -e  host="*****" -e j="*****" -e sleep="10" auto_ddns 
+
+# 二.
 git clone git@github.com:spring59/auto_ddns.git
 
 cd auto_ddns && 配置config.ini相关参数
