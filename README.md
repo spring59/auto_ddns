@@ -1,7 +1,16 @@
 # auto_ddns 
 仅支持CloudFlare，因之前使用别人的开源软件，总是会有未知的ip访问服务，所以写了这个小脚本
 自动解析家庭动态公网IP到**CloudFlare**
+
 Automatically resolve the family dynamic public IP to CloudFlare
+
+从这三个网站获取公网ip
+
+1.https://ip.3322.net
+
+2.https://ddns.oray.com/checkip
+
+3.https://myip.ipip.net/
 
 Server酱：
 微信通知服务

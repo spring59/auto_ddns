@@ -1,4 +1,3 @@
-# This is a sample Python script.
 import json
 import sys
 import os
@@ -9,27 +8,14 @@ import re
 import argparse
 from config import global_config
 
-TOKEN_CLOUD = global_config.get("config", "cloud_flare_token")
-DNS_ADDRESS = global_config.get("config", "dns_address")
-FANG_TANG_TOKEN = global_config.get("config", "fang_tang_token")
+TOKEN_CLOUD = ''
+DNS_ADDRESS = ''
+FANG_TANG_TOKEN = ''
 ZERO_ID = ''
-SLEEP_TIME = int(global_config.get("config", "sleep_time")) * 60
-try_num = int(global_config.get("config", "try_num"))
+SLEEP_TIME = 10
+try_num = 10
 # 通知微信方糖服务号
 WX_API_HOST = 'https://sctapi.ftqq.com/' + FANG_TANG_TOKEN + '.send?title={0}&desp={1}'
-
-# 第一种日志方式
-# LOG_FORMAT = '[%(levelname)s] %(asctime)s - %(message)s'
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format=LOG_FORMAT,
-#     handlers=[
-#         #logging.FileHandler("dns.log"),
-#         logging.StreamHandler(sys.stdout)
-#     ],
-#     datefmt="%Y-%m-%d %H:%I:%S"
-# )
-# 第二种日志方式
 if os.path.exists('log'):
     pass
 else:
@@ -53,8 +39,8 @@ def wx_ft_notice(currentIp, updateRes, hostName):
         logging.info('未配置server酱token')
         return
     title = '主人IPv4变了:%s,hk1更改结果:%s' % (currentIp, "成功" if updateRes else "失败")
-    desp = hostName;
-    url = WX_API_HOST.format(title, desp)
+    description = hostName
+    url = WX_API_HOST.format(title, description)
     response = requests.get(url)
     if response.status_code != 200:
         logging.info("wx 推送失败")
@@ -104,7 +90,7 @@ def parse_cloudflare_zero_id():
         else:
             return None
     except Exception as e:
-        logging.info("获取区域id失败" + e)
+        logging.info("获取区域id失败 %s" % e)
     return None
 
 
@@ -201,31 +187,47 @@ def loopMonitor():
         time.sleep(SLEEP_TIME)
 
 
-# 初始化执行脚本传入的参数
+def is_not_empty(obj):
+    if obj != '' and obj is not None:
+        return True
+    return False
+
+
+# 初始化的参数
 def init_params():
     global TOKEN_CLOUD
     global DNS_ADDRESS
     global FANG_TANG_TOKEN
     global SLEEP_TIME
+    global try_num
     parser = argparse.ArgumentParser(description='manual to this script')
     parser.add_argument('--token', type=str, default=None)
     parser.add_argument('--host', type=str, default=None)
     parser.add_argument('--j', type=str, default=None)
     parser.add_argument('--sleep', type=str, default=None)
     args = parser.parse_args()
-    if args.token != '' and args.host != '':
-        logging.info("初始化参数成功")
+    if is_not_empty(args.token) and is_not_empty(args.host):
         TOKEN_CLOUD = args.token
         DNS_ADDRESS = args.host
+        global_config.set_section('config')
         global_config.set('config', 'cloud_flare_token', TOKEN_CLOUD)
+        global_config.set('config', 'try_num', '10')
         global_config.set('config', 'dns_address', DNS_ADDRESS)
-        if args.j != '':
+        if is_not_empty(args.j):
             FANG_TANG_TOKEN = args.j
             global_config.set('config', 'fang_tang_token', FANG_TANG_TOKEN)
-        if args.sleep is not None and args.sleep != '':
+        if is_not_empty(args.sleep):
             SLEEP_TIME = int(args.sleep) * 60
             global_config.set('config', 'sleep_time', args.sleep)
         global_config.writer_all()
+        logging.info("初始化参数成功")
+    else:
+        TOKEN_CLOUD = global_config.get("config", "cloud_flare_token")
+        DNS_ADDRESS = global_config.get("config", "dns_address")
+        FANG_TANG_TOKEN = global_config.get("config", "fang_tang_token")
+        SLEEP_TIME = int(global_config.get("config", "sleep_time")) * 60
+        try_num = int(global_config.get("config", "try_num"))
+        logging.info("加载参数成功")
 
 
 # 开始程序
