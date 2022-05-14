@@ -14,11 +14,8 @@ RUN mkdir app
 ENV app /app
 WORKDIR ${app}
 ADD config.ini config.py main.py /$app
-#当容器启动时，使用python3执行指定路径的py脚本
-#CMD ["python3", " main.py --token $token --host $host --j $j --sleep $sleep"]cmd
 ENV token = ''
 ENV host = ''
 ENV j = ''
 ENV sleep = ''
 ENTRYPOINT python3 main.py --token=$token --host=$host --j=$j --sleep=$sleep
-#ENTRYPOINT ["python3","main.py --token=$token --host=$host --j=$j --sleep=$sleep"]
